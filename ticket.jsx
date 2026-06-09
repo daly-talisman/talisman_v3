@@ -13,7 +13,7 @@
     ruc: "20614378655",
     dir: "Av. Carlos Wiese 588 - Chao, Virú · La Libertad",
     tel: "WhatsApp 974 848 187",
-    web: "talisman.pe",
+    web: "@talisman",
     logo: "assets/logo-navy.png",
     igv: 0.18,
     anchoMM: 80            // ancho del rollo en mm (estándar 80 mm)
@@ -469,11 +469,37 @@
     var d = f.contentWindow.document;
     d.open(); d.write(doc); d.close();
     var printed = false;
-    var go = function () {
-      if (printed) return; printed = true;
-      try { f.contentWindow.focus(); f.contentWindow.print(); } catch (e) { }
-      cortarPapel(); // corte automático al terminar de imprimir el ticket
-    };
+   var go = function () {
+  if (printed) return; printed = true;
+
+  try {
+    var usuario = window.useStore?.getState?.().usuario;
+
+    if (usuario?.rol === "Mozo") {
+      // 👉 EXTRAER TEXTO DEL HTML (para RawBT)
+      var temp = document.createElement("div");
+      temp.innerHTML = built.html;
+
+      var texto = temp.innerText || temp.textContent || "";
+
+      const CUT = "\x1D\x56\x00";
+
+      window.location.href = "rawbt:" + encodeURIComponent(texto + CUT);
+
+      // eliminar iframe
+      setTimeout(function () { f.remove(); }, 300);
+
+      return;
+    }
+
+    // 👉 ADMIN (PC) sigue normal
+    f.contentWindow.focus();
+    f.contentWindow.print();
+
+  } catch (e) { }
+
+  cortarPapel();
+};
     var img = d.images && d.images[0];
     if (img && !img.complete) { img.onload = go; img.onerror = go; setTimeout(go, 1200); }
     else { setTimeout(go, 250); }
