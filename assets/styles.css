@@ -911,20 +911,58 @@ input, select, textarea { font-family: inherit; }
 /* KPIs de mesas: tira compacta que no roba alto a la cuadrícula */
 .tablet .view > .row.gap10 .card { padding: 9px 13px; min-width: 116px; }
 
+/* ============================================================
+   COMANDA EN TABLET — flujo por pasos: Carta → Comanda
+   En vez de exprimir las 2 columnas del PC en una pantalla,
+   el mozo ve una sola cosa a la vez: pantalla completa, táctil,
+   sin animaciones de panel.
+   ============================================================ */
+.drawer--tablet { width: 100vw; max-width: 100vw; border-left: none; }
+.drawer--tablet .drawer__head { padding: 15px 18px; gap: 13px; }
+
+/* Pestañas grandes bajo la cabecera */
+.drawer-tabs { flex: none; display: flex; gap: 10px; padding: 12px 16px; background: var(--bg-2); border-bottom: 1px solid var(--border); }
+.drawer-tabs button {
+  flex: 1; height: 56px; border-radius: 13px; display: flex; align-items: center; justify-content: center; gap: 10px;
+  font-family: 'Space Grotesk', sans-serif; font-size: 17px; font-weight: 600; color: var(--text-2);
+  border: 1px solid var(--border); background: var(--surface); -webkit-tap-highlight-color: transparent;
+  transition: background .1s, color .1s, border-color .1s;
 }
-@media (max-width: 900px){
+.drawer-tabs button svg { width: 21px; height: 21px; }
+.drawer-tabs button.is-active { background: var(--accent-soft); color: var(--accent); border-color: var(--border-accent); }
+.drawer-tabs button:active { transform: scale(.985); }
+.drawer-tabs__count {
+  min-width: 25px; height: 25px; padding: 0 8px; border-radius: 99px; background: var(--accent); color: #fff;
+  display: inline-flex; align-items: center; justify-content: center; font-family: 'Space Grotesk', sans-serif;
+  font-size: 13px; font-weight: 700; line-height: 1;
+}
 
-  /* 🔥 BAJAMOS el header para que no empuje tanto */
-  .mesa-header{
-    margin-bottom: 8px;
-    padding-bottom: 8px;
-  }
+/* Una sola columna; cada pestaña ocupa toda la pantalla */
+.drawer--tablet .drawer__body { grid-template-columns: 1fr; }
+.drawer--tablet .drawer__cat { border-right: none; border-bottom: none; max-height: none; }
+.drawer--tablet[data-vista="carta"] .drawer__order { display: none; }
+.drawer--tablet[data-vista="comanda"] .drawer__cat { display: none; }
 
-  /* 🔥 SUBIMOS la carta */
-  .carta-container{
-    margin-top: -40px; /* 👈 ESTO ES LA CLAVE */
-    z-index: 1;
-    position: relative;
-  }
+/* Barra inferior fija para avanzar de Carta → Comanda */
+.drawer-cta { flex: none; padding: 12px 16px calc(14px + env(safe-area-inset-bottom)); border-top: 1px solid var(--border); background: var(--surface); }
+.drawer-cta .btn { height: 58px; font-size: 17px; }
 
+/* Productos más grandes y cómodos para el dedo */
+.drawer--tablet .prod-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+.drawer--tablet .prod { padding: 16px 15px; }
+.drawer--tablet .prod__name { font-size: 15px; }
+.drawer--tablet .prod__add { width: 32px; height: 32px; }
+.drawer--tablet .search { width: 210px !important; }
+.drawer--tablet .chip.btn--sm { height: 34px !important; padding: 0 14px; font-size: 13.5px; }
+.drawer--tablet .drawer__cat .seg button { height: 42px; font-size: 15px; }
+
+/* Líneas de comanda y botones de cantidad: blancos de toque amplios */
+.drawer--tablet .line { padding: 14px 4px; }
+.drawer--tablet .qty button { width: 38px; height: 38px; }
+.drawer--tablet .order-foot { padding: 16px 18px calc(16px + env(safe-area-inset-bottom)); }
+.drawer--tablet .order-foot .btn { min-height: 54px; }
+
+@media (max-width: 720px) {
+  .drawer-tabs button { font-size: 15px; height: 50px; }
+  .drawer--tablet .search { width: 150px !important; }
 }
