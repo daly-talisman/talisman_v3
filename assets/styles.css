@@ -964,3 +964,13 @@ html, body {
   overflow: hidden;
   display: flex;
 }
+/* 🔥 SOLO LOS PLATOS SE MUEVEN (SCROLL) */
+.main {
+  height: 100%;
+  overflow-y: auto;
+}
+
+/* 🔥 EVITA QUE TODA LA PANTALLA SE MUEVA */
+body {
+  overflow: hidden;
+}
