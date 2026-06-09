@@ -910,3 +910,38 @@ input, select, textarea { font-family: inherit; }
 .tablet .mesa__resv-actions { margin-top: 9px; }
 /* KPIs de mesas: tira compacta que no roba alto a la cuadrícula */
 .tablet .view > .row.gap10 .card { padding: 9px 13px; min-width: 116px; }
+
+/* =========================
+   FIX TABLET (PLATOS + COMANDA LADO A LADO)
+   ========================= */
+
+@media (max-width: 1024px) {
+
+  /* CONTENEDOR PRINCIPAL (TODO EL CUERPO) */
+  .body {
+    display: flex !important;
+    flex-direction: row !important; /* 🔥 ESTO ES LO QUE ARREGLA TODO */
+  }
+
+  /* ZONA IZQUIERDA (PLATOS) */
+  .main {
+    flex: 2 !important;
+    overflow-y: auto;
+  }
+
+  /* ZONA DERECHA (COMANDA) */
+  .comanda {
+    flex: 1 !important;
+    min-width: 260px;
+  }
+
+}
+@media (max-width: 1024px) {
+
+  .lista-platos {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* 🔥 MÁS PLATOS */
+    gap: 8px;
+  }
+
+}
