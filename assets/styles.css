@@ -911,93 +911,32 @@ input, select, textarea { font-family: inherit; }
 /* KPIs de mesas: tira compacta que no roba alto a la cuadrícula */
 .tablet .view > .row.gap10 .card { padding: 9px 13px; min-width: 116px; }
 
-/* =========================
-   FIX TABLET (PLATOS + COMANDA LADO A LADO)
-   ========================= */
-
-@media (max-width: 1024px) {
-
-  /* CONTENEDOR PRINCIPAL (TODO EL CUERPO) */
-  .body {
-    display: flex !important;
-    flex-direction: row !important; /* 🔥 ESTO ES LO QUE ARREGLA TODO */
-  }
-
-  /* ZONA IZQUIERDA (PLATOS) */
-  .main {
-    flex: 2 !important;
-    overflow-y: auto;
-  }
-
-  /* ZONA DERECHA (COMANDA) */
-  .comanda {
-    flex: 1 !important;
-    min-width: 260px;
-  }
-
 }
-@media (max-width: 1024px) {
-
-  .lista-platos {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr); /* 🔥 MÁS PLATOS */
-    gap: 8px;
-  }
-
-}
-/* =========================
-   FIX ALTURA TABLET (CORTAR HEADER)
-   ========================= */
-
-html, body {
-  height: 100%;
-  overflow: hidden; /* 🔥 evita que se repita hacia abajo */
-}
-
-.app {
-  height: 100vh;
-  overflow: hidden;
-}
-
-.body {
-  height: calc(100vh - 70px); /* 🔥 AJUSTA ESTE NÚMERO */
-  overflow: hidden;
-  display: flex;
-}
-/* 🔥 SOLO LOS PLATOS SE MUEVEN (SCROLL) */
-.main {
-  height: 100%;
-  overflow-y: auto;
-}
-
-/* 🔥 EVITA QUE TODA LA PANTALLA SE MUEVA */
-body {
-  overflow: hidden;
-}
-/* ===== FIX TABLET ALTURA ===== */
 @media (max-width: 900px){
 
-  /* Corta la altura total de la pantalla */
-  .app{
-    height: 100vh;
+  /* CONTENEDOR PRINCIPAL DE LA VISTA */
+  .main{
+    display: flex;
+    flex-direction: row; /* 🔥 CLAVE: lado a lado */
+    height: calc(100vh - 80px);
     overflow: hidden;
   }
 
-  /* Header (Mesa, comensales, etc) */
-  .mesa-header{
-    flex-shrink: 0;
-  }
-
-  /* Contenedor principal */
-  .body, .main{
-    height: calc(100vh - 120px); /* ajusta si quieres más compacto */
-    overflow: hidden;
-  }
-
-  /* Zona donde están los platos */
+  /* CARTA (platos) */
   .carta-container{
-    height: 100%;
+    width: 65%;
     overflow-y: auto;
+  }
+
+  /* COMANDA */
+  .comanda-container{
+    width: 35%;
+    overflow-y: auto;
+  }
+
+  /* EVITA QUE SE VAYA ABAJO */
+  .comanda{
+    position: relative;
   }
 
 }
