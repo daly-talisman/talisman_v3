@@ -914,28 +914,16 @@ input, select, textarea { font-family: inherit; }
 }
 @media (max-width: 900px){
 
-  /* CONTENEDOR PRINCIPAL DE LA VISTA */
-  .main{
-    display: flex;
-    flex-direction: row; /* 🔥 CLAVE: lado a lado */
-    height: calc(100vh - 80px);
-    overflow: hidden;
+  /* 🔥 BAJAMOS el header para que no empuje tanto */
+  .mesa-header{
+    margin-bottom: 8px;
+    padding-bottom: 8px;
   }
 
-  /* CARTA (platos) */
+  /* 🔥 SUBIMOS la carta */
   .carta-container{
-    width: 65%;
-    overflow-y: auto;
-  }
-
-  /* COMANDA */
-  .comanda-container{
-    width: 35%;
-    overflow-y: auto;
-  }
-
-  /* EVITA QUE SE VAYA ABAJO */
-  .comanda{
+    margin-top: -40px; /* 👈 ESTO ES LA CLAVE */
+    z-index: 1;
     position: relative;
   }
 
