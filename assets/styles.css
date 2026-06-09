@@ -945,3 +945,22 @@ input, select, textarea { font-family: inherit; }
   }
 
 }
+/* =========================
+   FIX ALTURA TABLET (CORTAR HEADER)
+   ========================= */
+
+html, body {
+  height: 100%;
+  overflow: hidden; /* 🔥 evita que se repita hacia abajo */
+}
+
+.app {
+  height: 100vh;
+  overflow: hidden;
+}
+
+.body {
+  height: calc(100vh - 70px); /* 🔥 AJUSTA ESTE NÚMERO */
+  overflow: hidden;
+  display: flex;
+}
