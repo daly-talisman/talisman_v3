@@ -408,6 +408,9 @@ function ComandaDrawer() {
   const [descOpen, setDescOpen] = _uS(false);
   const [obs, setObs] = _uS("");
   const [tickMenu, setTickMenu] = _uS(false);
+  // En tablet (rol Mozo) la comanda es un flujo por pasos: Carta → Comanda.
+  const esTablet = !!(usuario && usuario.rol === "Mozo");
+  const [vista, setVista] = _uS("carta");
   if (!mesa) return null;
 
   const e = window.ESTADO[mesa.estado];
@@ -496,7 +499,7 @@ function ComandaDrawer() {
 
   return React.createElement(React.Fragment, null,
     React.createElement("div", { className: "scrim", onClick: close }),
-    React.createElement("div", { className: "drawer" },
+    React.createElement("div", { className: "drawer" + (esTablet ? " drawer--tablet" : ""), "data-vista": esTablet ? vista : null },
       /* head */
       React.createElement("div", { className: "drawer__head" },
         React.createElement("div", { style: { display: "grid", placeItems: "center", width: 52, height: 52, borderRadius: 13, background: mesa.llevar ? "var(--accent)" : "var(--surface)", border: "1px solid var(--border)", color: mesa.llevar ? "#fff" : "var(--text)", fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 22 } }, mesa.llevar ? React.createElement(window.Icon, { name: "receipt", style: { width: 24, height: 24 } }) : String(mesa.num).padStart(2, "0")),
@@ -515,6 +518,14 @@ function ComandaDrawer() {
             React.createElement("b", null, mesa.comensales),
             React.createElement("button", { onClick: () => setComensales(mesa.id, mesa.comensales + 1) }, React.createElement(window.Icon, { name: "plus", style: { width: 14, height: 14 } })))),
         React.createElement("button", { className: "iconbtn", onClick: close }, React.createElement(window.Icon, { name: "x" }))),
+
+      /* tabs (solo tablet/mozo): flujo por pasos Carta → Comanda */
+      esTablet && React.createElement("div", { className: "drawer-tabs" },
+        React.createElement("button", { className: vista === "carta" ? "is-active" : "", onClick: () => setVista("carta") },
+          React.createElement(window.Icon, { name: "utensils" }), "Carta"),
+        React.createElement("button", { className: vista === "comanda" ? "is-active" : "", onClick: () => setVista("comanda") },
+          React.createElement(window.Icon, { name: "receipt" }), "Comanda",
+          mesa.pedido.reduce((s, [, q]) => s + q, 0) > 0 && React.createElement("span", { className: "drawer-tabs__count" }, mesa.pedido.reduce((s, [, q]) => s + q, 0)))),
 
       /* body */
       React.createElement("div", { className: "drawer__body" },
@@ -621,7 +632,13 @@ function ComandaDrawer() {
                     React.createElement(window.Icon, { name: "receipt" }), "Pedir cuenta · " + window.money0(total))
                 : React.createElement("button", { className: "btn btn--accent", style: { flex: 1.4 }, disabled: !total, onClick: () => setPayMesa(mesa.id) },
                     React.createElement(window.Icon, { name: "cash" }), "Cobrar · " + window.money0(total)))))
-      )
+      ),
+
+      /* tablet: barra inferior para pasar de Carta a Comanda */
+      esTablet && vista === "carta" && React.createElement("div", { className: "drawer-cta" },
+        React.createElement("button", { className: "btn btn--accent btn--lg btn--block", onClick: () => setVista("comanda") },
+          React.createElement(window.Icon, { name: "receipt" }),
+          mesa.pedido.reduce((s, [, q]) => s + q, 0) > 0 ? ("Ver comanda · " + window.money0(total)) : "Ver comanda"))
     ),
     descOpen && React.createElement(DescartablesModal, { mesa: mesa, onClose: () => setDescOpen(false) })
   );
