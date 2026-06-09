@@ -974,3 +974,30 @@ html, body {
 body {
   overflow: hidden;
 }
+/* ===== FIX TABLET ALTURA ===== */
+@media (max-width: 900px){
+
+  /* Corta la altura total de la pantalla */
+  .app{
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* Header (Mesa, comensales, etc) */
+  .mesa-header{
+    flex-shrink: 0;
+  }
+
+  /* Contenedor principal */
+  .body, .main{
+    height: calc(100vh - 120px); /* ajusta si quieres más compacto */
+    overflow: hidden;
+  }
+
+  /* Zona donde están los platos */
+  .carta-container{
+    height: 100%;
+    overflow-y: auto;
+  }
+
+}
