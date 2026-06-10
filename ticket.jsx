@@ -436,99 +436,154 @@
      Si no hay impresora conectada, no hace nada (no rompe la vista previa). */
   var CMD_CORTE = "\x1D\x56\x00"; // GS V 0 = corte total de papel
 
-  function enviarComandoRaw(bytes) {
-    try {
-      // 1) Agente/puente externo de impresión cruda, si la integración lo expone.
-      if (typeof window.rawPrint === "function") { window.rawPrint(bytes); return true; }
-      // 2) Impresora térmica conectada por Web Serial (window.__printerPort).
-      var port = window.__printerPort;
-      if (port && port.writable && typeof TextEncoder !== "undefined") {
-        var buf = new TextEncoder().encode(bytes), writer = port.writable.getWriter();
-        writer.write(buf).finally(function () { try { writer.releaseLock(); } catch (e) {} });
-        return true;
-      }
-    } catch (e) { /* sin impresora: se ignora */ }
-    return false;
-  }
-  function cortarPapel() { return enviarComandoRaw(CMD_CORTE); }
-  window.CMD_CORTE = CMD_CORTE;
-  window.cortarPapel = cortarPapel;
+ /* ---------- Corte automático de papel (ESC/POS: GS V 0) ---------- */
+var CMD_CORTE = "\x1D\x56\x00";
 
-  /* ---------- Impresión vía iframe oculto (compartida) ---------- */
-  function _printDoc(title, built) {
-    var doc = '<!doctype html><html lang="es"><head><meta charset="utf-8">' +
-      '<base href="' + location.href + '"><title>' + esc(title) + '</title>' +
-      '<style>' + built.css + '</style></head><body>' + built.html + '</body></html>';
-    var old = document.getElementById("__ticketFrame");
-    if (old) old.remove();
-    var f = document.createElement("iframe");
-    f.id = "__ticketFrame";
-    f.setAttribute("aria-hidden", "true");
-    f.style.cssText = "position:fixed;width:0;height:0;right:0;bottom:0;border:0;visibility:hidden";
-    document.body.appendChild(f);
-    var d = f.contentWindow.document;
-    d.open(); d.write(doc); d.close();
-    var printed = false;
-   var go = function () {
-  if (printed) return; printed = true;
-
+function enviarComandoRaw(bytes) {
   try {
-    var usuario = window.useStore?.getState?.().usuario;
-
-    if (usuario?.rol === "Mozo") {
-      // 👉 EXTRAER TEXTO DEL HTML (para RawBT)
-      var temp = document.createElement("div");
-      temp.innerHTML = built.html;
-
-      var texto = temp.innerText || temp.textContent || "";
-
-      const CUT = "\x1D\x56\x00";
-
-      window.location.href = "rawbt:" + encodeURIComponent(texto + CUT);
-
-      // eliminar iframe
-      setTimeout(function () { f.remove(); }, 300);
-
-      return;
+    if (typeof window.rawPrint === "function") {
+      window.rawPrint(bytes);
+      return true;
     }
 
-    // 👉 ADMIN (PC) sigue normal
-    f.contentWindow.focus();
-    f.contentWindow.print();
+    var port = window.__printerPort;
+    if (port && port.writable && typeof TextEncoder !== "undefined") {
+      var buf = new TextEncoder().encode(bytes);
+      var writer = port.writable.getWriter();
+      writer.write(buf).finally(function () {
+        try { writer.releaseLock(); } catch (e) {}
+      });
+      return true;
+    }
+  } catch (e) {}
+  return false;
+}
 
-  } catch (e) { }
+function cortarPapel() {
+  return enviarComandoRaw(CMD_CORTE);
+}
 
-  cortarPapel();
-};
-    var img = d.images && d.images[0];
-    if (img && !img.complete) { img.onload = go; img.onerror = go; setTimeout(go, 1200); }
-    else { setTimeout(go, 250); }
-    if (f.contentWindow) f.contentWindow.onafterprint = function () { setTimeout(function () { f.remove(); }, 300); };
+window.CMD_CORTE = CMD_CORTE;
+window.cortarPapel = cortarPapel;
+
+/* ---------- Impresión iframe (solo ADMIN) ---------- */
+function _printDoc(title, built) {
+  var doc = '<!doctype html><html><head><meta charset="utf-8">' +
+    '<base href="' + location.href + '">' +
+    '<title>' + title + '</title>' +
+    '<style>' + built.css + '</style></head><body>' +
+    built.html + '</body></html>';
+
+  var old = document.getElementById("__ticketFrame");
+  if (old) old.remove();
+
+  var f = document.createElement("iframe");
+  f.id = "__ticketFrame";
+  f.style.cssText = "position:fixed;width:0;height:0;border:0;visibility:hidden";
+  document.body.appendChild(f);
+
+  var d = f.contentWindow.document;
+  d.open();
+  d.write(doc);
+  d.close();
+
+  setTimeout(function () {
+    try {
+      f.contentWindow.focus();
+      f.contentWindow.print();
+    } catch (e) {}
+
+    cortarPapel();
+  }, 300);
+}
+
+/* ---------- IMPRIMIR TICKET NORMAL ---------- */
+function imprimirTicket(venta, prodById, descById, extra) {
+  const usuario = window.useStore?.getState?.().usuario;
+
+  // 👉 MOZO → RAWBT
+  if (usuario?.rol === "Mozo") {
+    let ticket = buildTicket(venta, prodById, descById, extra);
+
+    let temp = document.createElement("div");
+    temp.innerHTML = ticket.html;
+
+    let texto = (temp.innerText || "") + "\n\n" + CMD_CORTE;
+
+    window.location.href = "rawbt:" + encodeURIComponent(texto);
+    return;
   }
 
-  function imprimirTicket(venta, prodById, descById, extra) {
-    _printDoc("Ticket " + correlativo(venta), buildTicket(venta, prodById, descById, extra));
-  }
-  function imprimirComanda(data, prodById, descById) {
-    _printDoc("Comanda cocina", buildComanda(data, prodById, descById));
-  }
-  // Varias comandas (bar/cocina/mesero) en un mismo trabajo de impresión.
-  // Cada ticket va en su propia página -> la impresora térmica corta entre uno y otro.
-  function imprimirComandas(data, prodById, descById, tipos) {
-    tipos = (tipos && tipos.length) ? tipos : ["cocina"];
-    var html = tipos.map(function (t, i) {
-      var d = {}; for (var k in data) d[k] = data[k]; d.tipo = t;
-      var inner = buildComanda(d, prodById, descById).html;
-      var brk = (i < tipos.length - 1) ? ' style="break-after:page;page-break-after:always"' : '';
-      return '<div class="cm-page"' + brk + '>' + inner + '</div>';
-    }).join("");
-    _printDoc("Comandas", { css: comandaCSS(), html: html });
+  // 👉 ADMIN
+  _printDoc("Ticket", buildTicket(venta, prodById, descById, extra));
+}
+
+/* ---------- IMPRIMIR UNA COMANDA ---------- */
+function imprimirComanda(data, prodById, descById) {
+  const usuario = window.useStore?.getState?.().usuario;
+
+  // 👉 MOZO → RAWBT
+  if (usuario?.rol === "Mozo") {
+    let ticket = buildComanda(data, prodById, descById);
+
+    let temp = document.createElement("div");
+    temp.innerHTML = ticket.html;
+
+    let texto = (temp.innerText || "") + "\n\n" + CMD_CORTE;
+
+    window.location.href = "rawbt:" + encodeURIComponent(texto);
+    return;
   }
 
-  window.buildTicket = buildTicket;
-  window.buildComanda = buildComanda;
-  window.imprimirTicket = imprimirTicket;
-  window.imprimirComanda = imprimirComanda;
-  window.imprimirComandas = imprimirComandas;
-  window.ticketCorrelativo = correlativo;
-})();
+  // 👉 ADMIN
+  _printDoc("Comanda", buildComanda(data, prodById, descById));
+}
+
+/* ---------- IMPRIMIR VARIAS COMANDAS (BARRA / COCINA / MESERO) ---------- */
+function imprimirComandas(data, prodById, descById, tipos) {
+
+  const usuario = window.useStore?.getState?.().usuario;
+
+  // 👉 TABLET (MOZO)
+  if (usuario?.rol === "Mozo") {
+
+    tipos = (tipos && tipos.length) ? tipos : ["cocina", "bar", "mesero"];
+
+    let texto = "";
+
+    tipos.forEach((t) => {
+      let d = { ...data, tipo: t };
+      let ticket = buildComanda(d, prodById, descById);
+
+      let temp = document.createElement("div");
+      temp.innerHTML = ticket.html;
+
+      texto += (temp.innerText || "").trim() + "\n\n" + CMD_CORTE;
+    });
+
+    window.location.href = "rawbt:" + encodeURIComponent(texto);
+    return;
+  }
+
+  // 👉 PC (ADMIN)
+  tipos = (tipos && tipos.length) ? tipos : ["cocina"];
+
+  var html = tipos.map(function (t, i) {
+    var d = {}; for (var k in data) d[k] = data[k]; d.tipo = t;
+    var inner = buildComanda(d, prodById, descById).html;
+    var brk = (i < tipos.length - 1)
+      ? ' style="break-after:page;page-break-after:always"'
+      : '';
+    return '<div class="cm-page"' + brk + '>' + inner + '</div>';
+  }).join("");
+
+  _printDoc("Comandas", { css: comandaCSS(), html: html });
+}
+
+/* ---------- EXPORTS ---------- */
+window.buildTicket = buildTicket;
+window.buildComanda = buildComanda;
+window.imprimirTicket = imprimirTicket;
+window.imprimirComanda = imprimirComanda;
+window.imprimirComandas = imprimirComandas;
+window.ticketCorrelativo = correlativo;
